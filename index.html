@@ -853,16 +853,18 @@
 
         function toggleDropdown(event) {
             event.stopPropagation();
-            document.getElementById('competitionDropdown')?.classList.toggle('open');
+            document.getElementById('competitionDropdown').classList.toggle('open');
         }
 
         window.addEventListener('click', () => {
-            document.getElementById('competitionDropdown')?.classList.remove('open');
+            const dropdown = document.getElementById('competitionDropdown');
+            if (dropdown) dropdown.classList.remove('open');
         });
 
         async function selectCompetition(leagueCode, labelText, event) {
             event.stopPropagation();
-            document.getElementById('competitionDropdown')?.classList.remove('open');
+            const dropdown = document.getElementById('competitionDropdown');
+            if (dropdown) dropdown.classList.remove('open');
             
             document.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
             event.target.classList.add('active');
@@ -877,31 +879,41 @@
 
         function selectNationalTeam(event) {
             event.stopPropagation();
-            document.getElementById('competitionDropdown')?.classList.remove('open');
+            const dropdown = document.getElementById('competitionDropdown');
+            if (dropdown) dropdown.classList.remove('open');
             window.open('https://www.google.de/search?q=Nationalmannschaft&hl=de', '_blank');
         }
 
         function selectDfbpokal(event) {
             event.stopPropagation();
-            document.getElementById('competitionDropdown')?.classList.remove('open');
+            const dropdown = document.getElementById('competitionDropdown');
+            if (dropdown) dropdown.classList.remove('open');
             window.open('https://www.google.de/search?q=DFB-Pokal&hl=de', '_blank');
         }
 
         function selectEuropaleague(event) {
             event.stopPropagation();
-            document.getElementById('competitionDropdown')?.classList.remove('open');
+            const dropdown = document.getElementById('competitionDropdown');
+            if (dropdown) dropdown.classList.remove('open');
             window.open('https://www.google.de/search?q=Europa+League&hl=de', '_blank');
         }
 
         async function fdFetch(endpoint) {
             try {
                 const targetUrl = `https://api.football-data.org/v4/${endpoint}`;
-                // Zuverlässiger Standard-Proxy für Browser-Anwendungen
-                const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=` + encodeURIComponent(targetUrl);
+                let proxyUrl = `/.netlify/functions/proxy?endpoint=` + encodeURIComponent(endpoint);
                 
-                const response = await fetch(proxyUrl, {
-                    headers: { "X-Auth-Token": FD_API_KEY }
-                });
+                // Fallback for local testing if netlify server isn't running
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    proxyUrl = `https://api.codetabs.com/v1/proxy?quest=` + encodeURIComponent(targetUrl);
+                }
+
+                const headers = {};
+                if (FD_API_KEY) {
+                    headers["X-Auth-Token"] = FD_API_KEY;
+                }
+
+                const response = await fetch(proxyUrl, { headers });
                 if (!response.ok) {
                     throw new Error(`API Fehler (${response.status})`);
                 }
@@ -981,14 +993,7 @@
                     }
                 }
 
-let standingGroup = null;
-                if (standingsData.standings && standingsData.standings.length > 0) {
-                    standingGroup = standingsData.standings.find(s => s.type === 'TOTAL') 
-                                 || standingsData.standings.find(s => s.stage === 'GROUP_STAGE')
-                                 || standingsData.standings.find(s => s.type === 'GROUP')
-                                 || standingsData.standings[0];
-                }
-let standingGroup = null;
+                let standingGroup = null;
                 if (standingsData && standingsData.standings && standingsData.standings.length > 0) {
                     standingGroup = standingsData.standings.find(s => s.type === 'TOTAL') 
                                  || standingsData.standings.find(s => s.stage === 'GROUP_STAGE')
@@ -996,8 +1001,6 @@ let standingGroup = null;
                                  || standingsData.standings[0];
                 }
                 globalStandings = (standingGroup && standingGroup.table) ? standingGroup.table : ((standingGroup && standingGroup.standings) ? standingGroup.standings : []);
-                    ? (standingsData.standings.find(s => s.type === 'TOTAL')?.table || standingsData.standings[0].table || []) 
-                    : [];
 
                 globalMatches = (matchesData && matchesData.matches) ? matchesData.matches.map(m => ({
                     matchId: m.id,
@@ -1005,32 +1008,35 @@ let standingGroup = null;
                     matchIsFinished: m.status === 'FINISHED',
                     matchday: m.matchday || 1,
                     stage: m.stage || 'Runde',
-                    team1: { teamName: m.homeTeam.name, shortName: m.homeTeam.shortName || m.homeTeam.name.substring(0, 3).toUpperCase() },
-                    team2: { teamName: m.awayTeam.name, shortName: m.awayTeam.shortName || m.awayTeam.name.substring(0, 3).toUpperCase() },
-                    score: m.score.fullTime,
+                    team1: { teamName: (m.homeTeam && m.homeTeam.name) || '', shortName: (m.homeTeam && (m.homeTeam.shortName || m.homeTeam.name.substring(0, 3).toUpperCase())) || '' },
+                    team2: { teamName: (m.awayTeam && m.awayTeam.name) || '', shortName: (m.awayTeam && (m.awayTeam.shortName || m.awayTeam.name.substring(0, 3).toUpperCase())) || '' },
+                    score: m.score && m.score.fullTime,
                     competitionType: currentLeague
                 })) : [];
 
                 globalScorers = (scorersData && scorersData.scorers) ? scorersData.scorers.map(item => {
-                    const nameParts = (item.player.name || '').trim().split(/\s+/);
+                    const playerName = (item.player && item.player.name) || '';
+                    const nameParts = playerName.trim().split(/\s+/);
                     let initials = nameParts[0] ? nameParts[0][0] : 'X';
                     if (nameParts.length > 1) initials += nameParts[nameParts.length - 1][0];
                     
                     let age = 'k.A.';
                     let formattedDate = 'k.A.';
-                    if (item.player.dateOfBirth) {
+                    if (item.player && item.player.dateOfBirth) {
                         const birthDate = new Date(item.player.dateOfBirth);
                         formattedDate = birthDate.toLocaleDateString('de-DE');
                         age = Math.abs(new Date(Date.now() - birthDate.getTime()).getUTCFullYear() - 1970);
                     }
 
+                    const teamObj = item.team || {};
+
                     return {
-                        name: item.player.name,
+                        name: playerName,
                         initials: initials.toUpperCase(),
-                        team: item.team.shortName || item.team.name,
-                        teamFullName: item.team.name,
-                        position: item.player.position || 'Offensive / Mitte',
-                        nationality: item.player.nationality || 'Deutschland',
+                        team: teamObj.shortName || teamObj.name || '',
+                        teamFullName: teamObj.name || '',
+                        position: (item.player && item.player.position) || 'Offensive / Mitte',
+                        nationality: (item.player && item.player.nationality) || 'Deutschland',
                         dateOfBirth: formattedDate,
                         age: age,
                         goals: item.goals || 0,
@@ -1066,12 +1072,12 @@ let standingGroup = null;
 
                 globalStandings.forEach((row) => {
                     const rank = row.position;
-                    const teamName = row.team.name;
-                    const matches = row.playedGames;
-                    const goalsFor = row.goalsFor;
-                    const goalsAgainst = row.goalsAgainst;
-                    const goalDiff = row.goalDifference;
-                    const points = row.points;
+                    const teamName = (row.team && row.team.name) || '';
+                    const matches = row.playedGames || 0;
+                    const goalsFor = row.goalsFor || 0;
+                    const goalsAgainst = row.goalsAgainst || 0;
+                    const goalDiff = row.goalDifference || 0;
+                    const points = row.points || 0;
 
                     const isFav = (savedFavorite === teamName);
                     const starHtml = isFav ? `<span class="favorite-star">⭐</span>` : ``;
@@ -1084,7 +1090,7 @@ let standingGroup = null;
                     }
 
                     const diffDisplay = goalDiff > 0 ? `+${goalDiff}` : goalDiff;
-                    const safeTeamName = teamName.replace(/'/g, "\\'");
+                    const safeTeamName = teamName.replace(/'/g, "\'");
 
                     tableHtml += `
                         <tr class="clickable-row${rowExtraClass}" onclick="selectTeam('${safeTeamName}')">
@@ -1112,9 +1118,9 @@ let standingGroup = null;
                 scrollToPanel(0);
 
                 let targetTeam = '';
-                if (savedFavorite && globalStandings.some(t => t.team.name.toLowerCase() === savedFavorite.toLowerCase())) {
+                if (savedFavorite && globalStandings.some(t => t.team && t.team.name && t.team.name.toLowerCase() === savedFavorite.toLowerCase())) {
                     targetTeam = savedFavorite;
-                } else if (globalStandings.length > 0) {
+                } else if (globalStandings.length > 0 && globalStandings[0].team && globalStandings[0].team.name) {
                     targetTeam = globalStandings[0].team.name;
                 }
 
@@ -1145,7 +1151,7 @@ let standingGroup = null;
             globalScorers.sort((a, b) => b.scorerPoints - a.scorerPoints || b.goals - a.goals);
             let goalHtml = '';
             globalScorers.forEach((item, index) => {
-                const safeName = item.name.replace(/'/g, "\\'");
+                const safeName = item.name.replace(/'/g, "\'");
                 let playerRowClass = 'clickable-row';
                 if (currentSelectedTeam) {
                     const teamShort = item.team.toLowerCase();
@@ -1230,7 +1236,7 @@ let standingGroup = null;
             event.stopPropagation();
             if (currentSelectedTeam) {
                 selectTeam(currentSelectedTeam);
-            } else if (globalStandings.length > 0) {
+            } else if (globalStandings.length > 0 && globalStandings[0].team && globalStandings[0].team.name) {
                 selectTeam(globalStandings[0].team.name);
             }
         }
@@ -1302,7 +1308,7 @@ let standingGroup = null;
                 if (badgeInline) badgeInline.style.display = isCurrent ? "inline-block" : "none";
                 if (labelEl) labelEl.textContent = `Spieltag ${spieltagNummer} (${formattedDDMMYY})`;
 
-                matches = globalMatches.filter(m => m.matchDateTime.startsWith(targetDateStr));
+                matches = globalMatches.filter(m => m.matchDateTime && m.matchDateTime.startsWith(targetDateStr));
             } else {
                 let isCurrent = (currentActiveMatchday === targetMatchday);
                 
@@ -1478,10 +1484,12 @@ let standingGroup = null;
             const matchesBody = document.querySelector('#team-matches-table tbody');
             if (!matchesBody) return;
 
-            const teamMatches = globalMatches.filter(m => 
-                (m.team1?.teamName?.toLowerCase().includes(teamName.toLowerCase())) || 
-                (m.team2?.teamName?.toLowerCase().includes(teamName.toLowerCase()))
-            );
+            const teamMatches = globalMatches.filter(m => {
+                const t1 = (m.team1 && m.team1.teamName) ? m.team1.teamName.toLowerCase() : '';
+                const t2 = (m.team2 && m.team2.teamName) ? m.team2.teamName.toLowerCase() : '';
+                const target = teamName.toLowerCase();
+                return t1.includes(target) || t2.includes(target);
+            });
 
             if (teamMatches.length === 0) {
                 matchesBody.innerHTML = `<tr><td colspan="5"><div class="table-cell-inner" style="justify-content:center; color:#666;">Keine Spiele für dieses Team</div></td></tr>`;
