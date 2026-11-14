@@ -6,110 +6,505 @@
     <title>Matchday - Live Dashboard</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        html, body { background: #080808 !important; color: #e5e7eb; height: 100vh; display: flex; flex-direction: column; overflow: hidden; padding: 6px 8px; gap: 4px; }
-        header { flex-shrink: 0; background: #121212; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 4px 10px; display: flex; justify-content: space-between; align-items: center; height: 38px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); z-index: 100; position: relative; }
-        .header-left { display: flex; align-items: center; gap: 8px; height: 100%; }
-        .bundesliga-logo { height: 16px; width: auto; object-fit: contain; display: block; }
-        .matchday-title-wrapper { display: flex; align-items: baseline; gap: 5px; }
-        .matchday-title { color: #f9f9f9; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
-        .season-year-label { color: #666666; font-size: 0.55rem; font-weight: 500; }
+        
+        html, body { 
+            background: #080808 !important; 
+            color: #e5e7eb; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            padding: 6px 8px; 
+            gap: 4px;
+        }
+        
+        header { 
+            flex-shrink: 0; 
+            background: #121212; 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 8px; 
+            padding: 4px 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            height: 38px; 
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            overflow: visible !important;
+            position: relative;
+            z-index: 100;
+        }
+        
+        .header-left { display: flex; align-items: center; gap: 8px; height: 100%; position: relative; }
+        .bundesliga-logo { height: 16px; width: auto; object-fit: contain; display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6)); }
+        
+        .matchday-title-wrapper {
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+        .matchday-title { color: #f9f9f9; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; line-height: 1; }
+        .season-year-label { color: #666666; font-size: 0.55rem; font-weight: 500; letter-spacing: 0.5px; }
+        
         .header-right { display: flex; align-items: center; gap: 8px; height: 100%; position: relative; }
+
         .custom-dropdown { position: relative; user-select: none; }
-        .dropdown-toggle { background: #181818; border: 1px solid rgba(255, 255, 255, 0.12); color: #00ffaa; font-size: 0.65rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; text-transform: uppercase; }
-        .dropdown-menu { position: absolute; top: calc(100% + 6px); right: 0; background: #141414; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8); display: none; flex-direction: column; min-width: 175px; z-index: 999; padding: 2px; gap: 2px; }
+
+        .dropdown-toggle {
+            background: #181818;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #00ffaa;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: border-color 0.2s;
+        }
+        .dropdown-toggle:hover { border-color: rgba(0, 255, 170, 0.4); }
+        .dropdown-arrow { font-size: 0.45rem; transition: transform 0.2s; }
+        .custom-dropdown.open .dropdown-arrow { transform: rotate(180deg); }
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            background: #141414;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            min-width: 175px;
+            z-index: 999;
+            overflow: hidden;
+            padding: 2px;
+            gap: 2px;
+        }
         .custom-dropdown.open .dropdown-menu { display: flex; }
-        .dropdown-item { padding: 7px 10px; font-size: 0.68rem; font-weight: 500; color: #d1d5db; cursor: pointer; text-transform: uppercase; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; }
+
+        .dropdown-item {
+            padding: 7px 10px;
+            font-size: 0.68rem;
+            font-weight: 500;
+            color: #d1d5db;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            text-transform: uppercase;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
         .dropdown-item:hover { background: #1f1f1f; color: #ffffff; }
         .dropdown-item.active { background: #1a2e26; color: #00ffaa; font-weight: 600; }
-        .dropdown-item.dropdown-special-section { background: rgba(255, 255, 255, 0.04); border-top: 1px solid rgba(255, 255, 255, 0.12); margin-top: 3px; padding-top: 7px; padding-bottom: 7px; font-size: 0.58rem; }
-        .google-icon-transparent { width: 10px; height: 10px; display: block; opacity: 0.75; }
-        @keyframes spinInPlace { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .dropdown-item.dropdown-special-section {
+            background: rgba(255, 255, 255, 0.04);
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            margin-top: 3px;
+            padding-top: 7px;
+            padding-bottom: 7px;
+            color: #d1d5db;
+            font-size: 0.58rem;
+            font-weight: 600;
+        }
+        .dropdown-item.dropdown-special-section:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+        
+        .google-icon-transparent {
+            width: 10px;
+            height: 10px;
+            display: block;
+            opacity: 0.75;
+            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.3));
+            transition: opacity 0.2s;
+        }
+        .dropdown-item.dropdown-special-section:hover .google-icon-transparent {
+            opacity: 1;
+        }
+
+        @keyframes spinInPlace {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         .spin-anim { animation: spinInPlace 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .refresh-btn { background: transparent; border: none; font-size: 0.9rem; cursor: pointer; padding: 2px; display: flex; align-items: center; opacity: 0.7; }
+
+        .refresh-btn { background: transparent; border: none; font-size: 0.9rem; cursor: pointer; padding: 2px; display: flex; align-items: center; opacity: 0.7; transition: opacity 0.2s; }
+        .refresh-btn:hover { opacity: 1; }
+        
         .status-bar { padding: 0 4px; display: flex; justify-content: flex-end; flex-shrink: 0; }
-        .update-time { color: #666666; font-size: 0.4rem; font-weight: 500; text-transform: uppercase; }
-        .card { background: #121212; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; padding: 6px 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); position: relative; }
-        .card-dynamic { border: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0; height: 242px; touch-action: pan-y; }
-        .header-banner { background: #161616; border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 4px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; width: 100%; flex-shrink: 0; margin-bottom: 4px; }
-        .title-white { color: #f9f9f9; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .update-time { color: #666666; font-size: 0.4rem; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+        
+        .card { 
+            background: #121212; 
+            border: 1px solid rgba(255, 255, 255, 0.06); 
+            border-radius: 8px; 
+            padding: 6px 8px; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        
+        .card-dynamic { 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            flex-shrink: 0; 
+            height: 242px; 
+            touch-action: pan-y; 
+        }
+
+        .header-banner {
+            background: #161616;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 4px;
+            padding: 4px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            margin-bottom: 4px;
+        }
+
+        .title-white { 
+            color: #f9f9f9; 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            letter-spacing: 0.3px; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+
         .highlight-team-name { color: #00ffaa; font-weight: 700; }
-        .favorite-star { font-size: 0.5rem; display: inline-flex; align-items: center; opacity: 0.65; margin-left: 5px; }
-        .app-link-badge { background: transparent; border: none; color: #888888; width: 16px; height: 16px; border-radius: 3px; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; opacity: 0.6; }
+        
+        .favorite-star { 
+            font-size: 0.5rem; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            vertical-align: middle; 
+            line-height: 1;
+            opacity: 0.65;
+            filter: grayscale(0.2);
+            margin-left: 5px;
+        }
+
+        .app-link-badge {
+            background: transparent;
+            border: none;
+            color: #888888;
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            text-decoration: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
+            transition: opacity 0.2s, background 0.2s;
+            opacity: 0.6;
+            line-height: 1;
+        }
+        .app-link-badge:hover { opacity: 1; background: rgba(255, 255, 255, 0.05); }
         .google-icon { width: 10px; height: 10px; display: block; }
-        .header-divider { width: 1px; height: 10px; background: rgba(255, 255, 255, 0.12); display: inline-block; vertical-align: middle; }
-        .swipe-header-container { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; padding: 2px 0; }
-        .main-swipe-title { font-size: 0.72rem; font-weight: 600; color: #f9f9f9; text-transform: uppercase; }
-        .sub-hint-centered { font-size: 0.52rem; color: #888888; font-weight: 500; text-transform: uppercase; }
+
+        .header-divider {
+            width: 1px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.12);
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .swipe-header-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+            padding: 2px 0;
+            position: relative;
+        }
+        .main-swipe-title { font-size: 0.72rem; font-weight: 600; color: #f9f9f9; letter-spacing: 0.5px; text-transform: uppercase; }
+        .sub-hint-centered { font-size: 0.52rem; color: #888888; font-weight: 500; margin-top: 1px; letter-spacing: 0.5px; text-transform: uppercase; }
+
         .form-trend { display: flex; gap: 4px; align-items: center; }
-        .form-dot { border-radius: 50%; display: inline-flex; width: 9px; height: 9px; }
+        .form-dot { 
+            font-size: 0.45rem; 
+            line-height: 1; 
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 9px;
+            height: 9px;
+        }
+        
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { background: #161616; color: #999999; padding: 3px 5px; text-align: left; font-size: 0.5rem; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.06); text-transform: uppercase; }
-        td { padding: 0; font-size: 0.65rem; border-bottom: 1px solid rgba(255, 255, 255, 0.025); color: #e5e7eb; vertical-align: middle; height: 22px; position: relative; }
-        .table-cell-inner { display: flex; align-items: center; width: 100%; height: 100%; padding: 0 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        th { background: #161616; color: #999999; padding: 3px 5px; text-align: left; font-size: 0.5rem; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.06); letter-spacing: 0.8px; text-transform: uppercase; }
+        
+        td { 
+            padding: 0; 
+            font-size: 0.65rem; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.025); 
+            transition: background 0.15s; 
+            position: relative; 
+            color: #e5e7eb;
+            vertical-align: middle;
+            height: 22px; 
+        }
+        
+        .table-cell-inner {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 0 5px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
         .clickable-row { cursor: pointer; }
         .clickable-row:hover td { background: rgba(255, 255, 255, 0.025) !important; }
-        tr.selected-team-row td { background-color: #16221d !important; color: #ffffff !important; font-weight: 600; }
+
+        tr.selected-team-row td {
+            background-color: #16221d !important;
+            color: #ffffff !important;
+            font-weight: 600;
+        }
         tr.selected-team-row td.table-points { color: #00ffaa !important; }
-        tr.selected-player-row td { background-color: #16221d !important; color: #ffffff !important; }
-        tr.selected-player-row td .player-name { color: #00ffaa !important; font-weight: 700; }
-        .col-dat { width: 22%; color: #9ca3af; }
-        .col-zeit { width: 14%; color: #6b7280; }
-        .col-match { width: 44%; }
-        .col-wettb { width: 0%; display: none; }
+
+        tr.selected-player-row td {
+            background-color: #16221d !important;
+            color: #ffffff !important;
+        }
+        tr.selected-player-row td .player-name {
+            color: #00ffaa !important;
+            font-weight: 700;
+        }
+
+        .col-dat { width: 22%; color: #9ca3af; } 
+        .col-zeit { width: 14%; color: #6b7280; } 
+        .col-match { width: 44%; font-weight: 400; } 
+        .col-wettb { width: 0%; display: none; } 
         .col-tv { width: 20%; text-align: center; }
-        .tv-score-wrapper { display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-        .tv { background: #1a1a1a; color: #9ca3af; padding: 1px 4px; border-radius: 3px; font-size: 0.43rem; border: 1px solid rgba(255, 255, 255, 0.05); }
-        .match-result-badge { font-size: 0.65rem; font-weight: 700; }
+
+        .tv-score-wrapper {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .tv { 
+            background: #1a1a1a; 
+            color: #9ca3af; 
+            padding: 1px 4px; 
+            border-radius: 3px; 
+            font-size: 0.43rem; 
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            display: inline-block;
+            line-height: 1.1;
+        }
+
+        .match-result-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            display: inline-block;
+            line-height: 1.1;
+        }
+
         .past { color: #52525b; }
+        
         #team-matches-table tr.row-win td, #matchday-table tr.row-win td { background-color: #13221b !important; }
         #team-matches-table tr.row-win .match-result-badge, #matchday-table tr.row-win .match-result-badge { color: #00ffaa; }
+
         #team-matches-table tr.row-draw td, #matchday-table tr.row-draw td { background-color: #221e12 !important; }
         #team-matches-table tr.row-draw .match-result-badge, #matchday-table tr.row-draw .match-result-badge { color: #fbbf24; }
+
         #team-matches-table tr.row-loss td, #matchday-table tr.row-loss td { background-color: #221313 !important; }
         #team-matches-table tr.row-loss .match-result-badge, #matchday-table tr.row-loss .match-result-badge { color: #f87171; }
-        #matchday-table tr.upcoming-row td { background-color: #18181b !important; color: #ffffff !important; font-weight: 500; }
-        .table-rank { width: 8%; text-align: center; color: #71717a; cursor: pointer; user-select: none; position: relative; z-index: 2; }
+
+        #matchday-table tr.upcoming-row td {
+            background-color: #18181b !important;
+            color: #ffffff !important;
+            font-weight: 500;
+        }
+
+        .table-rank { 
+            width: 8%; 
+            text-align: center; 
+            color: #71717a; 
+            font-weight: 500; 
+            cursor: pointer; 
+            user-select: none; 
+            -webkit-user-select: none; 
+            position: relative; 
+            z-index: 2; 
+        }
         .table-rank:hover { color: #00ffaa; }
-        .border-zone-cl td:first-child::after { content: ''; position: absolute; top: 0; left: 0; width: 200%; height: 100%; background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0%, transparent 40%); pointer-events: none; z-index: 1; }
-        .border-zone-el td:first-child::after { content: ''; position: absolute; top: 0; left: 0; width: 200%; height: 100%; background: linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0%, transparent 40%); pointer-events: none; z-index: 1; }
-        .border-zone-conf td:first-child::after { content: ''; position: absolute; top: 0; left: 0; width: 200%; height: 100%; background: linear-gradient(90deg, rgba(255, 255, 255, 0.015) 0%, transparent 40%); pointer-events: none; z-index: 1; }
-        .table-team { width: 44%; position: relative; z-index: 2; }
-        .table-matches { width: 10%; text-align: center; color: #71717a; }
-        .table-goals { width: 14%; text-align: center; color: #a1a1aa; }
+        
+        .border-zone-cl td:first-child::after { 
+            content: ''; position: absolute; top: 0; left: 0; width: 200%; height: 100%; 
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0%, transparent 40%); 
+            pointer-events: none; z-index: 1; 
+        }
+        .border-zone-el td:first-child::after { 
+            content: ''; position: absolute; top: 0; left: 0; width: 200%; height: 100%; 
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0%, transparent 40%); 
+            pointer-events: none; z-index: 1; 
+        }
+        .border-zone-conf td:first-child::after { 
+            content: ''; position: absolute; top: 0; left: 0; width: 200%; height: 100%; 
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.015) 0%, transparent 40%); 
+            pointer-events: none; z-index: 1; 
+        }
+
+        .table-team { width: 44%; font-weight: 400; position: relative; z-index: 2; } 
+        .table-matches { width: 10%; text-align: center; color: #71717a; } 
+        .table-goals { width: 14%; text-align: center; color: #a1a1aa; } 
         .table-diff { width: 12%; text-align: center; color: #71717a; font-size: 0.6rem; }
         .table-points { width: 12%; text-align: center; font-weight: 600; color: #00ffaa; }
-        .player-name { font-weight: 500; color: #e5e7eb; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-        .table-card { flex-grow: 1; display: flex; flex-direction: column; min-height: 0; padding-bottom: 2px; position: relative; }
-        .swipe-pagination-bar { background: #161616; border-top: 1px solid rgba(255, 255, 255, 0.06); border-bottom: 1px solid rgba(255, 255, 255, 0.04); padding: 3px 8px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; margin: 2px 0; border-radius: 4px; }
+
+        .player-name { font-weight: 500; color: #e5e7eb; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; line-height: 1.1; }
+
+        .table-card { 
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 0; 
+            padding-bottom: 2px;
+            position: relative;
+        }
+        
+        .swipe-pagination-bar {
+            background: #161616;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 3px 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+            margin-bottom: 2px;
+            border-radius: 4px;
+        }
+
         .swipe-dots-center { display: flex; gap: 8px; align-items: center; }
-        .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); cursor: pointer; transition: all 0.2s; }
+
+        .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
         .dot.active { background: #00ffaa; transform: scale(1.3); }
-        .swipe-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; flex-grow: 1; width: 100%; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+
+        .swipe-container {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            flex-grow: 1;
+            width: 100%;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-x: contain;
+            padding: 0;
+            gap: 0;
+        }
         .swipe-container::-webkit-scrollbar { display: none; }
-        .swipe-panel { flex: 0 0 100%; width: 100%; scroll-snap-align: start; display: flex; flex-direction: column; min-height: 0; opacity: 0.3; transition: opacity 0.25s ease; }
+
+        .swipe-panel {
+            flex: 0 0 100%;
+            width: 100%;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            transition: opacity 0.25s ease;
+            opacity: 0.3;
+        }
+
         .swipe-panel.active-panel { opacity: 1; }
-        .sticky-table-container { flex-grow: 1; overflow-y: auto !important; padding-bottom: 2px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.03); background: #141414; display: flex; flex-direction: column; }
+        
+        .sticky-table-container {
+            flex-grow: 1;
+            overflow-y: auto !important;
+            padding-bottom: 2px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            background: #141414;
+            display: flex;
+            flex-direction: column;
+        }
         .sticky-table-container table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         .sticky-table-container thead th { position: sticky; top: 0; z-index: 5; background: #161616; height: 22px; }
+
         #matchday-scroll-container { overflow-y: hidden !important; }
-        .matchday-subbar { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; background: #161616; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.65rem; font-weight: 600; color: #ffffff; border-radius: 4px 4px 0 0; }
+
+        .matchday-subbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 6px;
+            background: #161616;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #ffffff;
+            border-radius: 4px 4px 0 0;
+        }
         .matchday-controls { display: flex; align-items: center; gap: 6px; }
-        .md-nav-btn { background: #1e1e1e; border: 1px solid rgba(255, 255, 255, 0.1); color: #00ffaa; font-size: 0.6rem; padding: 1px 12px; border-radius: 3px; cursor: pointer; font-weight: 600; }
-        .live-badge-inline { color: #f87171; font-size: 0.48rem; font-weight: 700; text-transform: uppercase; display: none; margin-right: 4px; }
-        .player-profile-cv { display: flex; flex-direction: column; width: 100%; height: 100%; background: #141414; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 6px; padding: 10px 14px; justify-content: space-between; position: relative; }
-        .cv-close-btn { position: absolute; top: 8px; right: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); color: #9ca3af; font-size: 0.7rem; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; }
-        .cv-name-top { font-size: 1.05rem; font-weight: 800; color: #ffffff; padding-right: 20px; }
-        .cv-team-subtitle { font-size: 0.7rem; color: #00ffaa; font-weight: 600; margin-bottom: 4px; }
-        .cv-divider { width: 100%; height: 1px; background: rgba(255, 255, 255, 0.08); margin-bottom: 6px; }
-        .cv-stats-line { display: flex; justify-content: space-around; background: #181818; border-top: 1px solid rgba(255, 255, 255, 0.04); border-bottom: 1px solid rgba(255, 255, 255, 0.04); padding: 8px 0; border-radius: 4px; }
-        .cv-stat-block { display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .cv-stat-num { font-size: 1.15rem; font-weight: 700; color: #ffffff; }
-        .cv-stat-num.accent { color: #00ffaa; }
-        .cv-stat-lbl { font-size: 0.55rem; color: #9ca3af; font-weight: 600; text-transform: uppercase; margin-top: 2px; }
-        .cv-details-list { display: flex; flex-direction: column; gap: 5px; }
-        .cv-detail-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.03); padding-bottom: 4px; font-size: 0.75rem; }
-        .cv-detail-key { color: #9ca3af; font-weight: 500; text-transform: uppercase; font-size: 0.65rem; }
-        .cv-detail-val { color: #f3f4f6; font-weight: 600; }
+        
+        .md-nav-btn {
+            background: #1e1e1e;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #00ffaa;
+            font-size: 0.6rem;
+            padding: 1px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: 600;
+            text-align: center;
+        }
+        .md-nav-btn:hover { background: #252525; }
+
+        .matchday-header-group { display: flex; align-items: center; gap: 6px; }
+
+        .live-badge-inline {
+            color: #f87171;
+            font-size: 0.48rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: none;
+            margin-right: 4px;
+        }
+
+        ::-webkit-scrollbar { width: 3px; height: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 255, 170, 0.3); }
     </style>
 </head>
 <body>
@@ -121,6 +516,7 @@
                 <span class="season-year-label" id="season-year-display"></span>
             </div>
         </div>
+        
         <div class="header-right">
             <div class="custom-dropdown" id="competitionDropdown">
                 <div class="dropdown-toggle" onclick="toggleDropdown(event)">
@@ -130,25 +526,53 @@
                 <div class="dropdown-menu">
                     <div class="dropdown-item active" onclick="selectCompetition('BL1', '1. Bundesliga', event)">1. Bundesliga</div>
                     <div class="dropdown-item" onclick="selectCompetition('CL', 'Champions League', event)">Champions League</div>
+                    
                     <div class="dropdown-item dropdown-special-section" onclick="selectEuropaleague(event)">
                         <span>Europa League</span>
-                        <svg class="google-icon-transparent" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"/></svg>
+                        <svg class="google-icon-transparent" viewBox="0 0 24 24">
+                            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"/>
+                            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
+                            <path fill="#FBBC05" d="M5.3 14.7c-.2-.7-.4-1.5-.4-2.7s.2-2 .4-2.7L1.6 6.4C.6 8.4 0 10.6 0 13s.6 4.6 1.6 6.6l3.7-2.9z"/>
+                            <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.3-6.7-5.3L1.6 15.9C3.5 19.7 7.4 23 12 23z"/>
+                        </svg>
                     </div>
-                    <div class="dropdown-item dropdown-special-section" onclick="selectDfbpokal(event)">
+
+                    <div class="dropdown-item dropdown-special-section" onclick="selectDfbpokal(event)" style="border-top: none; margin-top: 0; padding-top: 2px;">
                         <span>DFB-Pokal</span>
-                        <svg class="google-icon-transparent" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/></svg>
+                        <svg class="google-icon-transparent" viewBox="0 0 24 24">
+                            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"/>
+                            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
+                            <path fill="#FBBC05" d="M5.3 14.7c-.2-.7-.4-1.5-.4-2.7s.2-2 .4-2.7L1.6 6.4C.6 8.4 0 10.6 0 13s.6 4.6 1.6 6.6l3.7-2.9z"/>
+                            <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.3-6.7-5.3L1.6 15.9C3.5 19.7 7.4 23 12 23z"/>
+                        </svg>
                     </div>
-                    <div class="dropdown-item dropdown-special-section" onclick="selectNationalTeam(event)">
+
+                    <div class="dropdown-item dropdown-special-section" onclick="selectNationalTeam(event)" style="border-top: none; margin-top: 0; padding-top: 2px;">
                         <span>Nationalmannschaft</span>
-                        <svg class="google-icon-transparent" viewBox="0 0 24 24"><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.3-6.7-5.3L1.6 15.9C3.5 19.7 7.4 23 12 23z"/></svg>
+                        <svg class="google-icon-transparent" viewBox="0 0 24 24">
+                            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"/>
+                            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
+                            <path fill="#FBBC05" d="M5.3 14.7c-.2-.7-.4-1.5-.4-2.7s.2-2 .4-2.7L1.6 6.4C.6 8.4 0 10.6 0 13s.6 4.6 1.6 6.6l3.7-2.9z"/>
+                            <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.3-6.7-5.3L1.6 15.9C3.5 19.7 7.4 23 12 23z"/>
+                        </svg>
                     </div>
                 </div>
             </div>
-            <button class="refresh-btn" onclick="forceRefresh()" title="Neu laden"><span class="ball-icon" id="header-ball" style="display:inline-block;">⚽</span></button>
+
+            <button class="refresh-btn" onclick="forceRefresh()" title="Neu laden von API">
+                <span class="ball-icon" id="header-ball" style="display:inline-block;">⚽</span>
+            </button>
         </div>
     </header>
-    <div class="status-bar"><span class="update-time" id="status-text">Bereit</span></div>
-    <div class="card card-dynamic" id="dynamic-card" ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)">
+
+    <div class="status-bar">
+        <span class="update-time" id="status-text">Bereit</span>
+    </div>
+
+    <!-- Oberes Team-Fenster -->
+    <div class="card card-dynamic" id="dynamic-card" 
+         ontouchstart="handleTouchStart(event)" 
+         ontouchend="handleTouchEnd(event)">
         <div class="header-banner" id="dynamic-header-banner">
             <span class="title-white">
                 <span id="selected-team-name" class="highlight-team-name">Wähle ein Team</span>
@@ -156,42 +580,72 @@
                 <span id="team-divider-container" style="display: none;" class="header-divider"></span>
                 <span id="team-app-link-container"></span>
             </span>
-            <div style="display: flex; align-items: center; gap: 6px;"><div class="form-trend" id="team-form-trend"></div></div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <div class="form-trend" id="team-form-trend"></div>
+            </div>
         </div>
         <div style="overflow-y: auto; height: 100%;" id="dynamic-content-container">
             <table id="team-matches-table">
-                <thead><tr><th class="col-dat">Datum</th><th class="col-zeit">Zeit</th><th class="col-match">Match</th><th class="col-wettb">Wettb.</th><th class="col-tv">TV / Erg</th></tr></thead>
-                <tbody><tr><td colspan="5"><div class="table-cell-inner" style="justify-content:center; color:#555;">Bitte Team antippen</div></td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th class="col-dat">Datum</th>
+                        <th class="col-zeit">Zeit</th>
+                        <th class="col-match">Match</th>
+                        <th class="col-wettb">Wettb.</th>
+                        <th class="col-tv">TV / Erg</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="5"><div class="table-cell-inner" style="justify-content:center; color:#555;">Bitte Team in der Tabelle antippen</div></td></tr>
+                </tbody>
             </table>
         </div>
     </div>
+
+    <!-- Unteres Tabellen-Fenster -->
     <div class="card table-card">
         <div class="header-banner">
-            <div class="swipe-header-container">
+            <div class="swipe-header-container" id="swipe-header-box">
                 <span class="main-swipe-title" id="swipe-main-title">Tabelle</span>
                 <span class="sub-hint-centered" id="table-sub-hint">1. Bundesliga</span>
             </div>
         </div>
-        <div class="swipe-pagination-bar">
+        
+        <div class="swipe-pagination-bar" id="swipe-pagination-bar">
             <div class="swipe-dots-center">
-                <span class="dot active" onclick="scrollToPanel(0)"></span>
-                <span class="dot" onclick="scrollToPanel(1)"></span>
-                <span class="dot" onclick="scrollToPanel(2)"></span>
+                <span class="dot active" onclick="scrollToPanel(0)" title="Tabelle"></span>
+                <span class="dot" onclick="scrollToPanel(1)" title="Spieltag"></span>
+                <span class="dot" onclick="scrollToPanel(2)" title="Topscorer"></span>
             </div>
         </div>
+
         <div class="swipe-container" id="swipeContainer" onscroll="updateActivePanelState()">
             <div class="swipe-panel active-panel" id="panel-0">
                 <div class="sticky-table-container">
                     <table id="main-panel-table">
-                        <thead><tr><th class="table-rank">Pl.</th><th class="table-team">Verein</th><th class="table-matches" style="text-align:center;">Sp.</th><th class="table-goals" style="text-align:center;">Tore</th><th class="table-diff" style="text-align:center;">+/-</th><th class="table-points" style="text-align:center;">Pkt.</th></tr></thead>
-                        <tbody id="table-body"><tr><td colspan="6"><div class="table-cell-inner" style="justify-content:center; color:#555;">Lade Daten...</div></td></tr></tbody>
+                        <thead>
+                            <tr>
+                                <th class="table-rank">Pl.</th>
+                                <th class="table-team">Verein</th>
+                                <th class="table-matches" style="text-align:center;">Sp.</th>
+                                <th class="table-goals" style="text-align:center;">Tore</th>
+                                <th class="table-diff" style="text-align:center;">+/-</th>
+                                <th class="table-points" style="text-align:center;">Pkt.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <tr><td colspan="6"><div class="table-cell-inner" style="justify-content:center; color:#555;">Lade Daten...</div></td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
+
             <div class="swipe-panel" id="panel-1">
                 <div class="table-scroll-container" id="matchday-scroll-container">
                     <div class="matchday-subbar">
-                        <span id="matchday-number-label" style="color:#ffffff; font-weight:600;">Spieltag</span>
+                        <div class="matchday-header-group">
+                            <span id="matchday-number-label" style="color:#ffffff; font-weight:600;">Spieltag</span>
+                        </div>
                         <div class="matchday-controls">
                             <span id="live-badge-inline" class="live-badge-inline">Aktuell</span>
                             <button class="md-nav-btn" onclick="changeMatchday(-1)">◀</button>
@@ -199,27 +653,48 @@
                         </div>
                     </div>
                     <table id="matchday-table">
-                        <thead><tr><th class="col-dat">Datum</th><th class="col-zeit">Zeit</th><th class="col-match">Match</th><th class="col-tv">TV / Erg</th></tr></thead>
-                        <tbody id="matchday-body"><tr><td colspan="4"><div class="table-cell-inner" style="justify-content:center; color:#555;">Lade Spieltag...</div></td></tr></tbody>
+                        <thead>
+                            <tr>
+                                <th class="col-dat">Datum</th>
+                                <th class="col-zeit">Zeit</th>
+                                <th class="col-match">Match</th>
+                                <th class="col-tv">TV / Erg</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matchday-body">
+                            <tr><td colspan="4"><div class="table-cell-inner" style="justify-content:center; color:#555;">Lade Spieltag...</div></td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
+
             <div class="swipe-panel" id="panel-2">
                 <div class="sticky-table-container">
                     <table>
-                        <thead><tr><th class="table-rank" style="width: 8%;">Pl.</th><th class="table-team" style="width: 48%;">Spieler</th><th class="table-goals" style="width: 14%; text-align: center;">Ass.</th><th class="table-goals" style="width: 14%; text-align: center; color: #888;">Tore</th><th class="table-points" style="width: 16%; text-align: center;">Scorer</th></tr></thead>
-                        <tbody id="goalgetters-body"><tr><td colspan="5"><div class="table-cell-inner" style="justify-content:center; color:#666;">Lade Topscorer...</div></td></tr></tbody>
+                        <thead>
+                            <tr>
+                                <th class="table-rank" style="width: 8%;">Pl.</th>
+                                <th class="table-team" style="width: 48%;">Spieler</th>
+                                <th class="table-goals" style="width: 14%; text-align: center;">Ass.</th>
+                                <th class="table-goals" style="width: 14%; text-align: center; color: #888;">Tore</th>
+                                <th class="table-points" style="width: 16%; text-align: center;">Scorer</th>
+                            </tr>
+                        </thead>
+                        <tbody id="goalgetters-body">
+                            <tr><td colspan="5"><div class="table-cell-inner" style="justify-content:center; color:#666;">Lade Topscorer...</div></td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- VOLLSTÄNDIGER JAVASCRIPT-CODE -->
     <script>
         let currentLeague = 'BL1';
         let globalMatches = [], globalStandings = [], globalScorers = [];
-        let currentPanelIndex = 0, currentActiveMatchday = 1, targetMatchday = 1;
-        let clUniqueDates = [], clCurrentDateIndex = 0, clTargetDateIndex = 0;
-        let pressTimer = null, currentSelectedTeam = '', touchStartX = 0, touchStartY = 0;
+        let currentPanelIndex = 0, currentActiveMatchday = 1;
+        let currentSelectedTeam = '', touchStartX = 0, touchStartY = 0;
 
         function handleTouchStart(e) { if (e.touches?.length > 0) { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; } }
         function handleTouchEnd(e) {
@@ -231,7 +706,7 @@
                 const idx = globalStandings.findIndex(t => t.team.name.toLowerCase() === currentSelectedTeam.toLowerCase());
                 if (idx === -1) return;
                 const newIdx = diffX < 0 ? (idx + 1) % globalStandings.length : (idx - 1 + globalStandings.length) % globalStandings.length;
-                selectTeam(globalStandings[newIdx].team.name, diffX < 0 ? 'next' : 'prev');
+                selectTeam(globalStandings[newIdx].team.name);
             }
         }
         function getSofascoreAppUrl(t) { return `https://www.google.de/search?q=site:sofascore.com+${encodeURIComponent(t)}&hl=de`; }
