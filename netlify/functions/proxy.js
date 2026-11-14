@@ -6,7 +6,7 @@ exports.handler = async function(event, context) {
         return { statusCode: 400, body: JSON.stringify({ error: "Missing endpoint" }) };
     }
 
-    const apiKey = '77f515e3b145463f84cbb38ade409ce7';
+    const apiKey = process.env.FOOTBALL_DATA_API_KEY;
     const targetUrl = `https://api.football-data.org/v4/${endpoint}`;
 
     try {
