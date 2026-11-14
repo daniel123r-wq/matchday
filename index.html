@@ -257,7 +257,7 @@
             }
         }
 
-        async function initDashboard() {
+	async function initDashboard() {
             spinBall();
             const status = document.getElementById('status-text');
             if (status) {
@@ -275,7 +275,7 @@
                 const cacheKey = 'cache_' + currentLeague;
                 const cachedData = localStorage.getItem(cacheKey);
 
-                // 1. Versuche, die Daten aus dem Cache zu laden
+                // 1. Versuche, die Daten direkt aus dem lokalen Speicher (Cache) zu laden
                 if (cachedData) {
                     try {
                         const parsed = JSON.parse(cachedData);
@@ -288,7 +288,7 @@
                     }
                 }
 
-                // 2. Wenn kein Cache existiert, direkt einmalig von der API holen und cachen
+                // 2. Wenn kein Cache da ist, einmalig von der API holen und DIREKT im Cache speichern
                 if (!standingsData || !matchesData) {
                     if (status) status.textContent = "Lade Live-Daten von API...";
                     
@@ -311,6 +311,10 @@
                     } catch(e) {
                         console.warn("Storage full or blocked");
                     }
+
+                    const now = new Date();
+                    if (status) status.textContent = `${now.toLocaleDateString('de-DE')}, ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} (API)`;
+                }
 
                     const now = new Date();
                     if (status) status.textContent = `Aktualisiert: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
