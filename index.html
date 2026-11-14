@@ -893,19 +893,13 @@
             window.open('https://www.google.de/search?q=Europa+League&hl=de', '_blank');
         }
 
-        async function fdFetch(endpoint) {
+	async function fdFetch(endpoint) {
             try {
-                const targetUrl = `https://api.football-data.org/v4/${endpoint}`;
-                // Zuverlässiger Standard-Proxy für Browser-Anwendungen
-                const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=` + encodeURIComponent(targetUrl);
-                
-                const response = await fetch(proxyUrl, {
-                    headers: { "X-Auth-Token": FD_API_KEY }
-                });
-                if (!response.ok) {
-                    throw new Error(`API Fehler (${response.status})`);
+                const res = await fetch(`/.netlify/functions/proxy?endpoint=${encodeURIComponent(endpoint)}`);
+                if (!res.ok) {
+                    throw new Error(`Netlify Proxy Fehler (${res.status})`);
                 }
-                return await response.json();
+                return await res.json();
             } catch (err) {
                 console.error("Fetch error:", err);
                 return null;
