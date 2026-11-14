@@ -61,12 +61,12 @@
         .tv { background: #1a1a1a; color: #9ca3af; padding: 1px 4px; border-radius: 3px; font-size: 0.43rem; border: 1px solid rgba(255, 255, 255, 0.05); }
         .match-result-badge { font-size: 0.65rem; font-weight: 700; }
         .past { color: #52525b; }
-        #matchday-table tr.row-win td { background-color: #13221b !important; }
-        #matchday-table tr.row-win .match-result-badge { color: #00ffaa; }
-        #matchday-table tr.row-draw td { background-color: #221e12 !important; }
-        #matchday-table tr.row-draw .match-result-badge { color: #fbbf24; }
-        #matchday-table tr.row-loss td { background-color: #221313 !important; }
-        #matchday-table tr.row-loss .match-result-badge { color: #f87171; }
+        #team-matches-table tr.row-win td, #matchday-table tr.row-win td { background-color: #13221b !important; }
+        #team-matches-table tr.row-win .match-result-badge, #matchday-table tr.row-win .match-result-badge { color: #00ffaa; }
+        #team-matches-table tr.row-draw td, #matchday-table tr.row-draw td { background-color: #221e12 !important; }
+        #team-matches-table tr.row-draw .match-result-badge, #matchday-table tr.row-draw .match-result-badge { color: #fbbf24; }
+        #team-matches-table tr.row-loss td, #matchday-table tr.row-loss td { background-color: #221313 !important; }
+        #team-matches-table tr.row-loss .match-result-badge, #matchday-table tr.row-loss .match-result-badge { color: #f87171; }
         #matchday-table tr.upcoming-row td { background-color: #18181b !important; color: #ffffff !important; font-weight: 500; }
         .table-rank { width: 8%; text-align: center; color: #71717a; cursor: pointer; user-select: none; position: relative; z-index: 2; }
         .table-rank:hover { color: #00ffaa; }
@@ -158,7 +158,7 @@
             </span>
             <div style="display: flex; align-items: center; gap: 6px;"><div class="form-trend" id="team-form-trend"></div></div>
         </div>
-        <div style="overflow: hidden; height: 100%;" id="dynamic-content-container">
+        <div style="overflow-y: auto; height: 100%;" id="dynamic-content-container">
             <table id="team-matches-table">
                 <thead><tr><th class="col-dat">Datum</th><th class="col-zeit">Zeit</th><th class="col-match">Match</th><th class="col-wettb">Wettb.</th><th class="col-tv">TV / Erg</th></tr></thead>
                 <tbody><tr><td colspan="5"><div class="table-cell-inner" style="justify-content:center; color:#555;">Bitte Team antippen</div></td></tr></tbody>
@@ -244,6 +244,7 @@
             document.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
             e.target.classList.add('active');
             document.getElementById('dropdown-selected-label').textContent = label;
+            document.getElementById('table-sub-hint').textContent = label;
             currentLeague = code;
             scrollToPanel(0);
             await initDashboard();
@@ -354,13 +355,84 @@
         }
 
         function spinBall() { const b = document.getElementById('header-ball'); if(b) { b.classList.remove('spin-anim'); void b.offsetWidth; b.classList.add('spin-anim'); } }
+
         function selectTeam(teamName) {
+            if (!teamName) return;
             currentSelectedTeam = teamName;
             document.getElementById('selected-team-name').textContent = teamName;
             document.getElementById('team-app-link-container').innerHTML = `<a href="${getSofascoreAppUrl(teamName)}" target="_blank" class="app-link-badge"><svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9C2.2-2 3.7-5 3.7-8.8z"/></svg></a>`;
+
+            document.querySelectorAll('#main-panel-table tbody tr').forEach(tr => {
+                const teamCell = tr.querySelector('.table-team');
+                if (teamCell && teamCell.textContent.includes(teamName)) {
+                    tr.classList.add('selected-team-row');
+                } else {
+                    tr.classList.remove('selected-team-row');
+                }
+            });
+
+            const teamMatchesTableBody = document.querySelector('#team-matches-table tbody');
+            if (!teamMatchesTableBody) return;
+
+            const matchesForTeam = globalMatches.filter(m => 
+                m.team1.teamName.toLowerCase() === teamName.toLowerCase() || 
+                m.team2.teamName.toLowerCase() === teamName.toLowerCase()
+            );
+
+            if (matchesForTeam.length === 0) {
+                teamMatchesTableBody.innerHTML = `<tr><td colspan="5"><div class="table-cell-inner" style="justify-content:center; color:#555;">Keine Spiele gefunden</div></td></tr>`;
+                return;
+            }
+
+            teamMatchesTableBody.innerHTML = matchesForTeam.map(m => {
+                const isHome = m.team1.teamName.toLowerCase() === teamName.toLowerCase();
+                const opponent = isHome ? m.team2.shortName : m.team1.shortName;
+                const venueLabel = isHome ? 'vs' : '@';
+                
+                let resultBadge = '<span class="tv">Sky</span>';
+                let rowClass = '';
+
+                if (m.matchIsFinished && m.score && m.score.home !== null && m.score.away !== null) {
+                    const homeGoals = m.score.home;
+                    const awayGoals = m.score.away;
+                    const teamGoals = isHome ? homeGoals : awayGoals;
+                    const oppGoals = isHome ? awayGoals : homeGoals;
+
+                    resultBadge = `<span class="match-result-badge">${homeGoals}:${awayGoals}</span>`;
+                    if (teamGoals > oppGoals) {
+                        rowClass = 'row-win';
+                    } else if (teamGoals < oppGoals) {
+                        rowClass = 'row-loss';
+                    } else {
+                        rowClass = 'row-draw';
+                    }
+                }
+
+                const dateStr = new Date(m.matchDateTime).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                const timeStr = new Date(m.matchDateTime).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+                return `
+                    <tr class="${rowClass}">
+                        <td class="col-dat"><div class="table-cell-inner">${dateStr}</div></td>
+                        <td class="col-zeit"><div class="table-cell-inner">${timeStr}</div></td>
+                        <td class="col-match"><div class="table-cell-inner">${venueLabel} ${opponent}</div></td>
+                        <td class="col-wettb" style="display:none;"></td>
+                        <td class="col-tv"><div class="tv-score-wrapper">${resultBadge}</div></td>
+                    </tr>
+                `;
+            }).join('');
         }
+
         function scrollToPanel(idx) { document.getElementById('swipeContainer').scrollTo({ left: window.innerWidth * idx, behavior: 'smooth' }); }
-        function updateActivePanelState() {}
+        function updateActivePanelState() {
+            const container = document.getElementById('swipeContainer');
+            if (!container) return;
+            const index = Math.round(container.scrollLeft / container.clientWidth);
+            const titles = ['Tabelle', 'Spieltag', 'Topscorer'];
+            document.getElementById('swipe-main-title').textContent = titles[index] || 'Tabelle';
+            document.querySelectorAll('.dot').forEach((dot, i) => dot.classList.toggle('active', i === index));
+            document.querySelectorAll('.swipe-panel').forEach((panel, i) => panel.classList.toggle('active-panel', i === index));
+        }
         function changeMatchday(dir) { currentActiveMatchday = Math.max(1, Math.min(34, currentActiveMatchday + dir)); renderMatchday(); }
 
         window.onload = () => initDashboard();
