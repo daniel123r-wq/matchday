@@ -975,9 +975,14 @@
                     }
                 }
 
-                globalStandings = (standingsData.standings && standingsData.standings.length > 0) 
-                    ? (standingsData.standings.find(s => s.type === 'TOTAL')?.table || standingsData.standings[0].table || []) 
-                    : [];
+		// Universelle Erkennung für Bundesliga (TOTAL) und Champions League (Gruppen / Ligaphase)
+                let standingGroup = null;
+                if (standingsData.standings && standingsData.standings.length > 0) {
+                    standingGroup = standingsData.standings.find(s => s.type === 'TOTAL') 
+                                 || standingsData.standings.find(s => s.stage === 'GROUP_STAGE')
+                                 || standingsData.standings[0];
+                }
+                globalStandings = standingGroup?.table || standingGroup?.standings || [];
 
                 globalMatches = (matchesData && matchesData.matches) ? matchesData.matches.map(m => ({
                     matchId: m.id,
